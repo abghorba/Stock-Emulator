@@ -7,7 +7,7 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 app = Flask(__name__)
@@ -62,6 +62,9 @@ def index():
 
     # Add user's available cash to total holdings
     grand_total = available_cash[0]["cash"] + stock_holdings
+
+    # If shares are equal to 0 then delete from portfolio
+    db.execute("DELETE FROM portfolio WHERE id=:id and shares = 0", id=session["user_id"])
 
     # Get current portfolio
     current_portfolio = db.execute("SELECT * FROM portfolio WHERE id=:id ORDER BY symbol", id=session["user_id"])
@@ -344,16 +347,22 @@ def deposit():
     if request.method == "POST":
 
         new_money = request.form.get("new_money")
+        cc_number = request.form.get("credit_number")
 
         # Ensure a number was submitted
         if not new_money:
             return apology("Enter a value")
 
+        # Ensure credit card number is valid
+        credit_card(int(cc_number))
+        if not cc_number or credit_card(int(cc_number)) == "INVALID":
+            return apology("Invalid credit card number")
+
         # Add new money to user's available cash
         db.execute("UPDATE users SET cash=cash+:money WHERE id=:id", money=new_money, id=session["user_id"])
 
         # Redirect user to home page
-        flash("Deposited money successfully!")
+        flash("Deposited money successfully with your " + credit_card(int(cc_number)) + " credit card!")
         return redirect("/")
 
     else:
