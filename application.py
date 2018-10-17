@@ -78,22 +78,7 @@ def buy():
     """Buy shares of stock"""
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
-        # Ensure symbol is submitted
-        if not request.form.get("symbol"):
-            return apology("missing symbol")
-
-        # Ensure shares is submitted
-        elif not request.form.get("shares"):
-            return apology("missing shares")
-
-        # Ensure proper number of shares
-        try:
-            shares_buying = int(request.form.get("shares"))
-            if shares_buying <= 0:
-                return apology("shares must be positive integer")
-        except:
-            return apology("shares must be positive integer")
+        shares_buying = int(request.form.get("shares"))
 
         # Look up stock information
         stock_info = lookup(request.form.get("symbol"))
@@ -172,14 +157,6 @@ def login():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Ensure username was submitted
-        if not request.form.get("username"):
-            return apology("must provide username", 403)
-
-        # Ensure password was submitted
-        elif not request.form.get("password"):
-            return apology("must provide password", 403)
-
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username=:username",
                           username=request.form.get("username"))
@@ -241,22 +218,6 @@ def register():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Ensure username was submitted
-        if not request.form.get("username"):
-            return apology("must provide username")
-
-        # Ensure password was submitted
-        elif not request.form.get("password"):
-            return apology("must provide password")
-
-        # Ensure confirmation was submitted
-        elif not request.form.get("confirmation"):
-            return apology("must provide password confirmation")
-
-        # Ensure password and confirmation match
-        elif request.form.get("password") != request.form.get("confirmation"):
-            return apology("passwords must match")
-
         # Add registered user into database
         new_user = db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
                               username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
@@ -286,14 +247,6 @@ def sell():
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
-        # Ensure user chose from list of symbols
-        if not request.form.get("symbol"):
-            return apology("choose a symbol")
-
-        # Ensure user entered number of shares
-        if not request.form.get("shares"):
-            return apology("enter number of shares")
 
         # Look up stock information
         stock_info = lookup(request.form.get("symbol"))
@@ -349,10 +302,6 @@ def deposit():
         new_money = request.form.get("new_money")
         cc_number = request.form.get("credit_number")
 
-        # Ensure a number was submitted
-        if not new_money:
-            return apology("Enter a value")
-
         # Ensure credit card number is valid
         credit_card(int(cc_number))
         if not cc_number or credit_card(int(cc_number)) == "INVALID":
@@ -375,10 +324,6 @@ def passwordreset():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Ensure user types in username
-        if not request.form.get("username"):
-            return apology("must provide username", 403)
-
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username=:username",
                           username=request.form.get("username"))
@@ -386,18 +331,6 @@ def passwordreset():
         # Ensure username exists
         if len(rows) != 1:
             return apology("username does not exist")
-
-        # Ensure new password was submitted
-        elif not request.form.get("new_password"):
-            return apology("must provide password")
-
-        # Ensure confirmation was submitted
-        elif not request.form.get("confirm_new"):
-            return apology("must provide password confirmation")
-
-        # Ensure password and confirmation match
-        elif request.form.get("new_password") != request.form.get("confirm_new"):
-            return apology("passwords must match")
 
         # Update user's new password
         db.execute("UPDATE users SET hash=:newhash WHERE username=:user",

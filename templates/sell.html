@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/sell" method="post">
+    <form action="/sell" id="sell" method="post">
         <div class="form-group">
             <select class="form-control" name="symbol">
                 <option disabled selected value="">Symbol</option>
@@ -19,4 +19,20 @@
         </div>
         <button class="btn btn-primary" type="submit">Sell</button>
     </form>
+    <script>
+        var form = document.getElementById("sell");
+        form.onsubmit = function() {
+            if(!form.symbol.value)
+            {
+                alert("Select symbol!");
+                return false;
+            }
+            if(!form.shares.value)
+            {
+                alert("Enter shares!");
+                return false;
+            }
+            return true;
+        }
+    </script>
 {% endblock %}

@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/buy" method="post">
+    <form action="/buy" id="buy" method="post">
         <div class="form-group">
             <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Symbol" type="text"/>
         </div>
@@ -14,4 +14,26 @@
         </div>
         <button class="btn btn-primary" type="submit">Buy</button>
     </form>
+    <script>
+        var form = document.getElementById("buy");
+        form.onsubmit = function() {
+            if (!form.symbol.value)
+            {
+                alert("Missing symbol!");
+                return false;
+            }
+            else if (!form.shares.value)
+            {
+                alert("Enter shares!");
+                return false;
+            }
+            else if(form.shares.value <= 0)
+            {
+                alert("Shares must be a positive integer!");
+                return false;
+            }
+            return true;
+
+        }
+    </script>
 {% endblock %}
