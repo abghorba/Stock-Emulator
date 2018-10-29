@@ -219,8 +219,9 @@ def register():
     if request.method == "POST":
 
         # Add registered user into database
-        new_user = db.execute("INSERT INTO users (username, hash) VALUES (:username, :hash)",
-                              username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")))
+        new_user = db.execute("INSERT INTO users (username, hash, keyword) VALUES (:username, :hash, :keyword)",
+                              username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")),
+                              keyword=request.form.get("keyword"))
 
         # Check the username is unique
         if not new_user:
@@ -324,13 +325,13 @@ def passwordreset():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username=:username",
-                          username=request.form.get("username"))
+        # Query database for username and keyword
+        rows = db.execute("SELECT * FROM users WHERE username=:user AND keyword=:keyword",
+                          user=request.form.get("username"), keyword=request.form.get("keyword"))
 
-        # Ensure username exists
+        # Ensure username/keyword combination exists
         if len(rows) != 1:
-            return apology("username does not exist")
+            return apology("Username/Keyword combination invalid")
 
         # Update user's new password
         db.execute("UPDATE users SET hash=:newhash WHERE username=:user",
@@ -341,6 +342,7 @@ def passwordreset():
 
     else:
         return render_template("password-reset.html")
+
 
 
 @app.route("/password-reset-success")
