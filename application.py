@@ -13,7 +13,7 @@ from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 application = Flask(__name__)
-# application.secret_key = SecretKey.SECRET_KEY
+application.secret_key = SecretKey.SECRET_KEY
 
 # Ensure templates are auto-reloaded
 application.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -28,12 +28,6 @@ def after_request(response):
 
 # Custom filter
 application.jinja_env.filters["usd"] = usd
-
-# Configure session to use filesystem (instead of signed cookies)
-application.config["SESSION_FILE_DIR"] = mkdtemp()
-application.config["SESSION_PERMANENT"] = False
-application.config["SESSION_TYPE"] = "filesystem"
-Session(application)
 
 # Parameters for MySQL database
 params = {
@@ -56,9 +50,85 @@ def close_database(error):
     if hasattr(g, 'db'):
         g.db.close()
 
-@application.route("/")
+
+@application.route("/", methods=["GET", "POST"])
+def login():
+    """Log user in"""
+    db, cursor = open_database()
+
+    # Forget any user_id
+    session.clear()
+    
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Query database for username
+        cursor.execute(
+            "SELECT * FROM users WHERE username=%s",
+            (request.form.get("username"),)
+        )
+        row = cursor.fetchone()
+
+        # Ensure username exists and password is correct
+        if not row or not check_password_hash(row["hash_"], request.form.get("password")):
+            return apology("invalid username and/or password", 403)
+
+        # Remember which user has logged in
+        session["user_id"] = row["id"]
+
+        # Redirect user to home page
+        flash("Login successful!")
+        return redirect("/portfolio")
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("login.html")
+
+
+@application.route("/register", methods=["GET", "POST"])
+def register():
+    """Register user"""
+    db, cursor = open_database()
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Add registered user into database
+        try:
+            cursor.execute(
+                "INSERT INTO users (username, hash_, keyword) VALUES (%s, %s, %s)",
+                    (request.form.get("username"), generate_password_hash(request.form.get("password")), request.form.get("keyword"))
+            )
+            db.commit()
+        except:
+            return apology("Username already exists")
+
+        # Remember which user has logged in
+        session["user_id"] = cursor.lastrowid
+
+        # Redirect user to home page
+        flash("Registered successfully!")
+        return redirect("/portfolio")
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("register.html")
+
+
+@application.route("/logout")
+def logout():
+    """Log user out"""
+
+    # Forget any user_id
+    session.clear()
+
+    # Redirect user to login form
+    return redirect("/")
+
+
+@application.route("/portfolio")
 @login_required
-def index():
+def portfolio():
     """Shows user's portfolio"""
     db, cursor = open_database()
     cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
@@ -104,11 +174,34 @@ def index():
     current_portfolio = cursor.fetchall()
 
     return render_template(
-        "index.html", 
+        "portfolio.html", 
         stocks=current_portfolio, 
         user_cash=usd(available_cash["cash"]), 
         grand_total=usd(grand_total)
     )
+
+
+@application.route("/quote", methods=["GET", "POST"])
+@login_required
+def quote():
+    """Get stock quote."""
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Look up stock information
+        stock_info = lookup(request.form.get("symbol"))
+
+        # Ensure stock exists
+        if not stock_info:
+            return apology("invalid symbol")
+
+        # Show user stock information
+        return render_template("quoted.html", stock=stock_info, price=usd(stock_info["price"]))
+
+    # User reached route via GET (as by clicking a link or via redirect)
+    else:
+        return render_template("quote.html")
 
 
 @application.route("/buy", methods=["GET", "POST"])
@@ -188,125 +281,11 @@ def buy():
 
         # Redirect user to home page
         flash("Bought {} share(s) of {} successfully!".format(shares_buying, symbol_buying))
-        return redirect("/")
+        return redirect("/portfolio")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("buy.html")
-
-
-@application.route("/history")
-@login_required
-def history():
-    """Show history of transactions"""
-    db, cursor = open_database()
-
-    # Get user's history
-    cursor.execute(
-        "SELECT * FROM history WHERE id=%s ORDER BY time_", 
-        (session["user_id"],) 
-    )
-    user_history = cursor.fetchall()
-
-    return render_template("history.html", histories=user_history)
-
-
-@application.route("/login", methods=["GET", "POST"])
-def login():
-    """Log user in"""
-    db, cursor = open_database()
-
-    # Forget any user_id
-    session.clear()
-    
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Query database for username
-        cursor.execute(
-            "SELECT * FROM users WHERE username=%s",
-            (request.form.get("username"),)
-        )
-        row = cursor.fetchone()
-
-        # Ensure username exists and password is correct
-        if not row or not check_password_hash(row["hash_"], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
-
-        # Remember which user has logged in
-        session["user_id"] = row["id"]
-
-        # Redirect user to home page
-        flash("Login successful!")
-        return redirect("/")
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("login.html")
-
-
-@application.route("/logout")
-def logout():
-    """Log user out"""
-
-    # Forget any user_id
-    session.clear()
-
-    # Redirect user to login form
-    return redirect("/")
-
-
-@application.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Look up stock information
-        stock_info = lookup(request.form.get("symbol"))
-
-        # Ensure stock exists
-        if not stock_info:
-            return apology("invalid symbol")
-
-        # Show user stock information
-        return render_template("quoted.html", stock=stock_info, price=usd(stock_info["price"]))
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("quote.html")
-
-
-@application.route("/register", methods=["GET", "POST"])
-def register():
-    """Register user"""
-    db, cursor = open_database()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Add registered user into database
-        try:
-            cursor.execute(
-                "INSERT INTO users (username, hash_, keyword) VALUES (%s, %s, %s)",
-                    (request.form.get("username"), generate_password_hash(request.form.get("password")), request.form.get("keyword"))
-            )
-            db.commit()
-        except:
-            return apology("Username already exists")
-
-        # Remember which user has logged in
-        session["user_id"] = cursor.lastrowid
-
-        # Redirect user to home page
-        flash("Registered successfully!")
-        return redirect("/")
-
-    # User reached route via GET (as by clicking a link or via redirect)
-    else:
-        return render_template("register.html")
 
 
 @application.route("/sell", methods=["GET", "POST"])
@@ -374,11 +353,27 @@ def sell():
 
         # Redirect user to home page
         flash("Sold {} share(s) of {} successfully!".format(shares_selling, symbol_selling))
-        return redirect("/")
+        return redirect("/portfolio")
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("sell.html", stocks=user_stocks)
+
+
+@application.route("/history")
+@login_required
+def history():
+    """Show history of transactions"""
+    db, cursor = open_database()
+
+    # Get user's history
+    cursor.execute(
+        "SELECT * FROM history WHERE id=%s ORDER BY time_", 
+        (session["user_id"],) 
+    )
+    user_history = cursor.fetchall()
+
+    return render_template("history.html", histories=user_history)
 
 
 @application.route("/deposit", methods=["GET", "POST"])
@@ -407,21 +402,24 @@ def deposit():
 
         # Redirect user to home page
         flash("Deposited ${} successfully with your {} credit card!".format(new_money, credit_card(int(cc_number))))
-        return redirect("/")
+        return redirect("/portfolio")
 
     else:
         return render_template("deposit.html")
 
 
 @application.route("/bank", methods=["GET", "POST"])
+@login_required
 def bank():
     db, cursor = open_database()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-        return redirect("/")
+        # TODO
+        return redirect("/portfolio")
     else:
         return render_template("bank.html")
+
 
 @application.route("/password-reset", methods=["GET", "POST"])
 def passwordreset():
@@ -448,7 +446,7 @@ def passwordreset():
         )
         db.commit()
 
-        # Redirect user to home page
+        # Redirect user to success landing page
         return redirect("/password-reset-success")
 
     else:
@@ -458,6 +456,7 @@ def passwordreset():
 @application.route("/password-reset-success")
 def resetsuccess():
     return render_template("password-reset-success.html")
+
 
 def errorhandler(e):
     """Handle error"""
