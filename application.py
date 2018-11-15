@@ -3,7 +3,7 @@ import mysql.connector
 
 from config import SecretKey, MySQL_DB
 from decimal import Decimal
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, g, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions
@@ -13,7 +13,7 @@ from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 application = Flask(__name__)
-application.secret_key = SecretKey.SECRET_KEY
+# application.secret_key = SecretKey.SECRET_KEY
 
 # Ensure templates are auto-reloaded
 application.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -26,24 +26,41 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-
 # Custom filter
 application.jinja_env.filters["usd"] = usd
 
-# Connect to MySQL database
-db = mysql.connector.connect(
-    host=MySQL_DB.DB_HOST,
-    user=MySQL_DB.DB_USER,
-    passwd=MySQL_DB.DB_PASSWORD,
-    database=MySQL_DB.DB_NAME,
-)
-cursor = db.cursor(dictionary=True)
+# Configure session to use filesystem (instead of signed cookies)
+application.config["SESSION_FILE_DIR"] = mkdtemp()
+application.config["SESSION_PERMANENT"] = False
+application.config["SESSION_TYPE"] = "filesystem"
+Session(application)
 
+# Parameters for MySQL database
+params = {
+    'host': MySQL_DB.DB_HOST,
+    'user': MySQL_DB.DB_USER,
+    'passwd': MySQL_DB.DB_PASSWORD,
+    'database': MySQL_DB.DB_NAME,
+}
+
+def open_database():
+    """Opens a new database connection if there is none yet"""
+    if not hasattr(g, 'db'):
+        g.db = mysql.connector.connect(**params)
+        g.cursor = g.db.cursor(dictionary=True)
+    return g.db, g.cursor
+
+@application.teardown_appcontext
+def close_database(error):
+    """Closes the database connection at the end of the request"""
+    if hasattr(g, 'db'):
+        g.db.close()
 
 @application.route("/")
 @login_required
 def index():
     """Shows user's portfolio"""
+    db, cursor = open_database()
     cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
     user_stocks = cursor.fetchall()
 
@@ -98,6 +115,8 @@ def index():
 @login_required
 def buy():
     """Buy shares of stock"""
+    db, cursor = open_database()
+
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
         shares_buying = int(request.form.get("shares"))
@@ -180,6 +199,7 @@ def buy():
 @login_required
 def history():
     """Show history of transactions"""
+    db, cursor = open_database()
 
     # Get user's history
     cursor.execute(
@@ -194,10 +214,11 @@ def history():
 @application.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
+    db, cursor = open_database()
 
     # Forget any user_id
     session.clear()
-
+    
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
@@ -261,6 +282,7 @@ def quote():
 @application.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
+    db, cursor = open_database()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
@@ -291,6 +313,7 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
+    db, cursor = open_database()
 
     # Query database for user's stocks
     cursor.execute(
@@ -362,6 +385,8 @@ def sell():
 @login_required
 def deposit():
     """Add more cash"""
+    db, cursor = open_database()
+
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
@@ -388,9 +413,21 @@ def deposit():
         return render_template("deposit.html")
 
 
+@application.route("/bank", methods=["GET", "POST"])
+def bank():
+    db, cursor = open_database()
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+        return redirect("/")
+    else:
+        return render_template("bank.html")
+
 @application.route("/password-reset", methods=["GET", "POST"])
 def passwordreset():
     """Allow users to reset password"""
+    db, cursor = open_database()
+
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 

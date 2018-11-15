@@ -1,3 +1,4 @@
+import math
 import requests
 import urllib.parse
 
@@ -62,57 +63,69 @@ def usd(value):
 
 
 def credit_card(cc_number):
-    """Checks if a credit card number is valid and returns the type of card"""
+    """Checks if a credit card number is valid and returns the type of card
+        Using the Luhn algorthm: https://www.geeksforgeeks.org/luhn-algorithm/"""
 
+    # No negative numbers!
     if cc_number <= 0:
         return "INVALID"
 
     # Initialize variables
-    numOfDigits = len(str(abs(cc_number)))
-    sumDigits_mult2 = 0
-    sumOfDigits = 0
-    n = cc_number
-    m = 0
-    k = 0
+    number_digits = len(str(cc_number))
+    sum_digits_multiplied_by_2 = 0
+    total_sum = 0
+    cc_number_copy = cc_number
+    digit_multiplied_by_2 = 0
 
     # Compute the sum according to algorithm
-    while n != 0:
-        sumOfDigits += n % 10
-        n //= 10
-        m = n % 10
-        m *= 2
-        if m >= 10:
-            m = m % 10 + m // 10
-            sumDigits_mult2 += m
+    while cc_number_copy != 0:
+        total_sum += cc_number_copy % 10
+        cc_number_copy //= 10
+        digit_multiplied_by_2 = cc_number_copy % 10
+        digit_multiplied_by_2 *= 2
+        if digit_multiplied_by_2 >= 10:
+            # If the product after being multiplied by 2 is greater than 10, add the digits of the product
+            digit_multiplied_by_2 = digit_multiplied_by_2 % 10 + digit_multiplied_by_2 // 10
+            sum_digits_multiplied_by_2 += digit_multiplied_by_2
         else:
-            sumDigits_mult2 += m
-        n //= 10
-    sumOfDigits += sumDigits_mult2
+            sum_digits_multiplied_by_2 += digit_multiplied_by_2
+        cc_number_copy //= 10
+    total_sum += sum_digits_multiplied_by_2
 
-    # Take first two digits of credit card number
-    firstTwoDigits = cc_number
-    for i in range((numOfDigits - 2)):
-        firstTwoDigits //= 10
+    # Save first two digits of credit card number
+    # Formula taken from https://stackoverflow.com/questions/41271299/how-can-i-get-the-first-two-digits-of-a-number
+    first_two_digits = cc_number // 10 ** (int(math.log(cc_number, 10)) - 1)
+    
+    # Save first digit of credit card number
+    first_digit = first_two_digits // 10
 
-    # Check if credit card is valid and the type
-    if sumOfDigits % 10 != 0:
+    # Check if credit card is valid and the type (Visa, Amex, or Mastercard)
+    # Visa credit cards start with the number 4 and have a length of 13, 16, or 19
+    # Amex credit cards start with 34 or 37 and have a length of 15
+    # Mastercard credit cards start with a number between 51 and 55 inclusive and have a length of 16
+    if total_sum % 10 != 0:
         return "INVALID"
     else:
-        if numOfDigits == 13:
-            if (firstTwoDigits // 10) == 4:
+        if number_digits == 13:
+            if first_digit == 4:
                 return "VISA"
             else:
                 return "INVALID"
-        elif numOfDigits == 15:
-            if firstTwoDigits == 34 or firstTwoDigits == 37:
+        elif number_digits == 15:
+            if first_two_digits == 34 or first_two_digits == 37:
                 return "AMEX"
             else:
                 return "INVALID"
-        elif numOfDigits == 16:
-            if (firstTwoDigits // 10) == 4:
+        elif number_digits == 16:
+            if first_digit == 4:
                 return "VISA"
-            elif firstTwoDigits >= 51 and firstTwoDigits <= 55:
+            elif first_two_digits >= 51 and first_two_digits <= 55:
                 return "MASTERCARD"
+            else:
+                return "INVALID"
+        elif number_digits == 19:
+            if first_digit == 4:
+                return "VISA"
             else:
                 return "INVALID"
         else:
