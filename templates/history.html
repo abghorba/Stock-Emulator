@@ -10,7 +10,8 @@
             <tr>
                 <th>Symbol</th>
                 <th>Shares</th>
-                <th>Price</th>
+                <th>Price Per Share</th>
+                <th>Total</th>
                 <th>Transacted</th>
             </tr>
         </thead>
@@ -20,6 +21,11 @@
                     <td>{{ history["symbol"] }}</td>
                     <td>{{ history["transactions"] }}</td>
                     <td>${{ history["price"] }}</td>
+                    {% if history["price"] * history["transactions"] < 0 %}
+                        <td>${{ -history["transactions"] * history["price"] }}</td>
+                    {% else %}
+                        <td>${{ history["transactions"] * history["price"] }}</td>
+                    {% endif %}
                     <td>{{ history["time_"] }}</td>
                 </tr>
             {% endfor %}
