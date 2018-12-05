@@ -7,7 +7,7 @@ www.stock-emulator.m4mvtr6c2m.us-west-1.elasticbeanstalk.com
 <h2> Usage </h2>
 You will be taken to the login screen. From here, navigate to the "Register" link in the top right corner and create an account. Your password must contain 8 characters and at least one lowercase, uppercase, and special character! Remember your keyword! Your username, a hash of your password, and your keyword will be stored in a MySQL database. You begin with $10,000. You will be redirected to the home page, which is your portfolio.
 
-You may navigate to "Quote" to get quotes on the costs of shares for any particular company, provided you have their trading symbol.
+You may navigate to "Quote" to get quotes on the costs of shares for any particular company. As you type, you will see matching stock symbols for convenience! When you get a quote, you will be shown the quote price and a history of the stocks as a line graph, where you can choose to view 1 month, 3 month, 6 month, etc., histories!
 
 On "Buy" you type in the trading symbol of the company you wish to buy shares from and the number of shares. If you have enough money, you will be able to buy those shares and will be redirected to your portfolio, where everything will be updated accordingly.
 
