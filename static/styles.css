@@ -31,6 +31,23 @@ main .form-control
     width: auto;
 }
 
+#quote {
+    height: 50vh;
+}
+
+#stock-symbol {
+    display: none;
+}
+
+.graph {
+    width: 100%;
+    height: 400px;
+}
+
+.btn {
+    border: black;
+}
+
 main
 {
     /* scroll horizontally as needed */
@@ -45,3 +62,46 @@ main img
     /* constrain images on small screens */
     max-width: 100%;
 }
+
+.input-group {
+    padding-bottom: 20px;
+}
+
+.autocomplete {
+    /*the container must be positioned relative:*/
+    position: relative;
+  }
+
+.autocomplete-items {
+    position: absolute;
+    border: 1px solid #d4d4d4;
+    border-bottom: none;
+    border-top: none;
+    z-index: 99;
+    /*position the autocomplete items to be the same width as the container:*/
+    top: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  .autocomplete-items div {
+    padding: 10px;
+    cursor: pointer;
+    background-color: #fff; 
+    border-bottom: 1px solid #d4d4d4; 
+  }
+
+  .autocomplete-items div:hover {
+    /*when hovering an item:*/
+    background-color: dodgerblue; 
+    color: #ffffff; 
+  }
+  .autocomplete-active {
+    /*when navigating through the items using the arrow keys:*/
+    background-color: dodgerblue !important; 
+    color: #ffffff; 
+  }
+
+  .btn-graph {
+      padding-bottom: 30px;
+  }

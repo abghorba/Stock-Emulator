@@ -6,16 +6,28 @@
 
 {% block main %}
     <form action="/register" id="registration" method="post">
-        <div class="form-group">
+        <div class="input-group col-sm-4 offset-sm-4">
+            <div class="input-group-addon">
+                <span class="fa fa-user"></span>
+            </div>
             <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text"/>
         </div>
-        <div class="form-group">
+        <div class="input-group col-sm-4 offset-sm-4">
+            <div class="input-group-addon">
+                <span class="fa fa-lock"></span>
+            </div>
             <input class="form-control" name="password" placeholder="Password" type="password"/>
         </div>
-        <div class="form-group">
+        <div class="input-group col-sm-4 offset-sm-4">
+            <div class="input-group-addon">
+                <span class="fa fa-lock"></span>
+            </div>
             <input class="form-control" name="confirmation" placeholder="Password (again)" type="password"/>
         </div>
-        <div class="form-group">
+        <div class="input-group col-sm-4 offset-sm-4">
+            <div class="input-group-addon">
+                <span class="fa fa-key"></span>
+            </div>
             <input class="form-control" name="keyword" placeholder="Keyword" type="text"/>
         </div>
         <button class="btn btn-primary" type="submit">Register</button>
