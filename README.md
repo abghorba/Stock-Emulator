@@ -4,6 +4,9 @@ A stock emulator which lets you create an account that starts with $10,000 and l
 <h2> Website </h2>
 www.stock-emulator.m4mvtr6c2m.us-west-1.elasticbeanstalk.com 
 
+<h2> Video Demo </h2>
+https://youtu.be/qUNBqMoHP88
+
 <h2> Usage </h2>
 You will be taken to the login screen. From here, navigate to the "Register" link in the top right corner and create an account. Your password must contain 8 characters and at least one lowercase, uppercase, and special character! Remember your keyword! Your username, a hash of your password, and your keyword will be stored in a MySQL database. You begin with $10,000. You will be redirected to the home page, which is your portfolio.
 
