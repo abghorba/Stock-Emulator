@@ -1,8 +1,5 @@
 # Stock-Emulator
-A stock emulator which lets you create an account that starts with $10,000 and lets you invest in stocks. You can get quotes on stocks, buy stocks, sell stocks, and view your history.
-
-<h2> Website </h2>
-www.stock-emulator.m4mvtr6c2m.us-west-1.elasticbeanstalk.com 
+A stock trading application which lets you create an account that starts with $10,000 and lets you invest in stocks. You can get quotes on stocks, buy stocks, sell stocks, and view your history.
 
 <h2> Video Demo </h2>
 https://youtu.be/qUNBqMoHP88
